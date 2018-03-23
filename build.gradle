@@ -1,0 +1,35 @@
+def gameFolder = project.prop_gameFolder
+def srcDir = 'src/'
+
+new File(srcDir).eachFile { file ->
+    if (file.directory) {
+        tasks.create(name: "syncMod_$file.name", type: Sync) {
+            from file
+            into "${gameFolder}/mods/${file.name}"
+            exclude '*.xcf'
+
+            doLast() {
+                println "Copy from " + file
+                println "file name: " + file.name
+            }
+        }
+    }
+}
+
+task syncFilesWithGame(dependsOn: tasks.matching { Task task -> task.name.startsWith("syncMod_") }) {
+    doFirst {
+        println "Syncing Files between dev and game"
+    }
+    doLast {
+        println "Sync complete"
+    }
+}
+
+task launchGame(type: Exec) {
+    doFirst {
+        println "Launching game"
+    }
+    workingDir gameFolder
+    commandLine 'cmd', '/c', 'Breach.exe'
+}
+launchGame.dependsOn syncFilesWithGame
